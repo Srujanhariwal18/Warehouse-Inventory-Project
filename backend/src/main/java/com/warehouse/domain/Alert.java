@@ -1,0 +1,2 @@
+package com.warehouse.domain; import jakarta.persistence.*; import java.time.*; import java.util.*;
+@Entity @Table(name="alerts") public class Alert { @Id @GeneratedValue public UUID id; @ManyToOne(optional=false) public Item item; @Enumerated(EnumType.STRING) public AlertStatus status=AlertStatus.OPEN; public String message; @Column(name="created_at") public Instant createdAt=Instant.now(); @Column(name="resolved_at") public Instant resolvedAt; }

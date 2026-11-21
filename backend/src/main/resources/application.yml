@@ -1,0 +1,19 @@
+spring:
+  config:
+    import: optional:file:./.env[.properties]
+  datasource:
+    url: "${SUPABASE_DB_URL:jdbc:postgresql://localhost:5432/warehouse}"
+    username: "${DB_USERNAME:postgres}"
+    password: "${DB_PASSWORD:postgres}"
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: "${CLERK_JWKS_URL:http://localhost:8080/jwks}"
+app:
+  frontend-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
+  clerk-webhook-secret: ${CLERK_WEBHOOK_SECRET:}

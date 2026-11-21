@@ -1,0 +1,2 @@
+package com.warehouse.domain; import jakarta.persistence.*; import java.time.*; import java.util.*;
+@Entity @Table(name="stock_transactions") public class StockTransaction { @Id @GeneratedValue public UUID id; @ManyToOne(optional=false) public Item item; @Enumerated(EnumType.STRING) public TransactionType type; public int quantity; public String note; @Column(name="performed_by") public UUID performedBy; @Column(name="created_at") public Instant createdAt=Instant.now(); }

@@ -1,0 +1,1 @@
+package com.warehouse.repo; import com.warehouse.domain.*; import org.springframework.data.jpa.repository.*; import java.util.*; public interface AlertRepository extends JpaRepository<Alert,UUID>{boolean existsByItemIdAndStatusNot(UUID id, AlertStatus status); List<Alert> findByStatusNot(AlertStatus status);}

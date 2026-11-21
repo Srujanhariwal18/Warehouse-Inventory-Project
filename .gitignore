@@ -1,0 +1,10 @@
+# Runtime configuration / secrets
+.env
+**/.env
+
+# Build and dependency output
+backend/target/
+frontend/node_modules/
+frontend/dist/
+.m2/
+*.tsbuildinfo

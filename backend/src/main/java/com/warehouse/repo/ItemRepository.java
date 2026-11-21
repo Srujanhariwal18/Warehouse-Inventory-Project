@@ -1,0 +1,1 @@
+package com.warehouse.repo; import com.warehouse.domain.*; import org.springframework.data.jpa.repository.*; import java.util.*; public interface ItemRepository extends JpaRepository<Item,UUID>{Optional<Item> findByBarcode(String barcode); List<Item> findByQuantityLessThanEqual(int threshold);}
