@@ -1,4 +1,47 @@
-import React,{useEffect,useMemo,useState} from 'react'; import {createRoot} from 'react-dom/client'; import {ClerkProvider,SignedIn,SignedOut,SignInButton,UserButton,useAuth} from '@clerk/clerk-react'; import {Barcode,Boxes,Menu,Moon,Sun,TriangleAlert} from 'lucide-react'; import {LineChart,Line,XAxis,YAxis,Tooltip,ResponsiveContainer} from 'recharts'; import './styles.css';
-const base=import.meta.env.VITE_API_URL||'http://localhost:8080/api/v1'; type Item={id:string,name:string,sku:string,barcode?:string,category?:string,unit:string,quantity:number,lowStockThreshold:number}; const data=[{day:'Mon',moves:12},{day:'Tue',moves:18},{day:'Wed',moves:9},{day:'Thu',moves:21},{day:'Fri',moves:15}];
-function App(){const {getToken}=useAuth();const [items,setItems]=useState<Item[]>([]);const [page,setPage]=useState('Dashboard');const [dark,setDark]=useState(localStorage.theme==='dark'||(!localStorage.theme&&matchMedia('(prefers-color-scheme: dark)').matches));const [scan,setScan]=useState('');useEffect(()=>{document.documentElement.dataset.theme=dark?'dark':'';localStorage.theme=dark?'dark':'light'},[dark]); const api=async(p:string,o?:RequestInit)=>fetch(base+p,{...o,headers:{'Content-Type':'application/json',Authorization:`Bearer ${await getToken()}`}}).then(r=>r.json());useEffect(()=>{api('/items').then(setItems).catch(()=>setItems([]))},[]); const low=items.filter(i=>i.quantity<=i.lowStockThreshold); const submit=async(e:React.FormEvent)=>{e.preventDefault();const i=items.find(x=>x.barcode===scan||x.sku===scan);if(!i)return alert('Item not found');await api('/transactions',{method:'POST',body:JSON.stringify({itemId:i.id,type:'IN',quantity:1,note:'Scanner intake'})});setScan('');api('/items').then(setItems)}; return <div className="app"><aside><div className="brand"><Boxes/> Stockroom</div>{['Dashboard','Items','Stock movement','Alerts','Reports','Users'].map(x=><button className={page===x?'active':''} onClick={()=>setPage(x)}>{x}</button>)}</aside><main><header><button className="mobile"><Menu/></button><div><small>WAREHOUSE CONTROL</small><h1>{page}</h1></div><div className="tools"><button onClick={()=>setDark(!dark)} aria-label="toggle theme">{dark?<Sun/>:<Moon/>}</button><button aria-label="alerts"><TriangleAlert/>{low.length>0&&<b>{low.length}</b>}</button><UserButton/></div></header>{low.length>0&&<div className="alert"><TriangleAlert/> {low.length} item{low.length>1?'s are':' is'} below threshold. <button onClick={()=>setPage('Alerts')}>Review alerts</button></div>}{page==='Dashboard'&&<><section className="cards"><Card label="Total items" value={items.length}/><Card label="Low stock" value={low.length} warn/><Card label="Out of stock" value={items.filter(i=>i.quantity===0).length} warn/><Card label="Today’s moves" value="—"/></section><section className="panel chart"><h2>Stock movement</h2><ResponsiveContainer width="100%" height={260}><LineChart data={data}><XAxis dataKey="day"/><YAxis/><Tooltip/><Line dataKey="moves" stroke="#21c7a8" strokeWidth={3}/></LineChart></ResponsiveContainer></section></>}{page==='Items'&&<Items items={items}/>} {page==='Stock movement'&&<section className="panel"><h2>Scan or enter a barcode</h2><form onSubmit={submit} className="scan"><Barcode/><input autoFocus value={scan} onChange={e=>setScan(e.target.value)} placeholder="SKU or barcode (scanner supported)"/><button>Record stock in</button></form><p className="muted">USB barcode scanners submit automatically with Enter. Camera scanning can be connected with html5-qrcode in the production camera flow.</p></section>}{page==='Alerts'&&<Items items={low}/>} {['Reports','Users'].includes(page)&&<section className="panel empty"><h2>{page}</h2><p>Available to administrators. Export and role-management API endpoints are ready for connection to Clerk’s production keys.</p></section>}</main></div>}
-function Card(p:{label:string,value:any,warn?:boolean}){return <article className={'card '+(p.warn?'warn':'')}><span>{p.label}</span><strong>{p.value}</strong></article>} function Items({items}:{items:Item[]}){return <section className="panel"><div className="paneltitle"><h2>Inventory</h2><span>{items.length} records</span></div><div className="table"><div className="thead"><span>Item</span><span>SKU</span><span>Quantity</span><span>Status</span></div>{items.map(i=><div className="tr" key={i.id}><span><b>{i.name}</b><small>{i.category||'Uncategorized'}</small></span><code>{i.sku}</code><span>{i.quantity} {i.unit}</span><span className={i.quantity<=i.lowStockThreshold?'pill danger':'pill'}>{i.quantity===0?'Out of stock':i.quantity<=i.lowStockThreshold?'Low stock':'Healthy'}</span></div>)}{!items.length&&<p className="empty">No items yet. Add sample items through the API or admin screen.</p>}</div></section>};createRoot(document.getElementById('root')!).render(<ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY||'pk_test_placeholder'}><SignedIn><App/></SignedIn><SignedOut><div className="signin"><Boxes size={48}/><h1>Stockroom</h1><p>Warehouse inventory, made calm.</p><SignInButton><button>Sign in</button></SignInButton></div></SignedOut></ClerkProvider>);
+import React, { useState, useEffect } from 'react';
+import { createRoot } from 'react-dom/client';
+import { ClerkProvider, SignedIn, SignedOut } from '@clerk/clerk-react';
+import { LandingPage } from './LandingPage';
+import { Dashboard } from './Dashboard';
+import './styles.css';
+
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder';
+
+const RootApp: React.FC = () => {
+  const [dark, setDark] = useState<boolean>(() => {
+    const saved = localStorage.getItem('stockroom_theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    localStorage.setItem('stockroom_theme', dark ? 'dark' : 'light');
+  }, [dark]);
+
+  const toggleTheme = () => {
+    setDark((prev) => !prev);
+  };
+
+  return (
+    <ClerkProvider publishableKey={clerkPubKey}>
+      {/* When signed in via Clerk, display full authenticated dashboard */}
+      <SignedIn>
+        <Dashboard
+          dark={dark}
+          onToggleTheme={toggleTheme}
+        />
+      </SignedIn>
+
+      {/* When signed out, show the modern landing page */}
+      <SignedOut>
+        <LandingPage
+          dark={dark}
+          onToggleTheme={toggleTheme}
+        />
+      </SignedOut>
+    </ClerkProvider>
+  );
+};
+
+createRoot(document.getElementById('root')!).render(<RootApp />);

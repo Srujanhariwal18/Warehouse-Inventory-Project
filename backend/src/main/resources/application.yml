@@ -1,10 +1,13 @@
 spring:
   config:
-    import: optional:file:./.env[.properties]
+    import:
+      - "optional:file:./.env[.properties]"
+      - "optional:file:./backend/.env[.properties]"
+      - "optional:file:../.env[.properties]"
   datasource:
-    url: "${SUPABASE_DB_URL:jdbc:postgresql://localhost:5432/warehouse}"
+    url: "${SUPABASE_DB_URL:jdbc:postgresql://db.hjgvwjnpadotodldperj.supabase.co:5432/postgres}"
     username: "${DB_USERNAME:postgres}"
-    password: "${DB_PASSWORD:postgres}"
+    password: "${DB_PASSWORD:Qe_jXce4-H%Af2!}"
   jpa:
     hibernate:
       ddl-auto: validate
@@ -13,7 +16,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: "${CLERK_JWKS_URL:http://localhost:8080/jwks}"
+          jwk-set-uri: "${CLERK_JWKS_URL:https://loving-grouper-7512.clerk.accounts.dev/.well-known/jwks.json}"
+          issuer-uri: "${CLERK_ISSUER_URI:https://loving-grouper-7512.clerk.accounts.dev}"
 app:
   frontend-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
   clerk-webhook-secret: ${CLERK_WEBHOOK_SECRET:}
