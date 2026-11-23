@@ -9,8 +9,8 @@ spring:
       - "optional:file:../.env[.properties]"
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: "${SUPABASE_DB_URL:${DATABASE_URL:jdbc:postgresql://db.hjgvwjnpadotodldperj.supabase.co:5432/postgres}}"
-    username: "${DB_USERNAME:postgres}"
+    url: "${SUPABASE_DB_URL:${DATABASE_URL:jdbc:postgresql://aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres?sslmode=require}}"
+    username: "${DB_USERNAME:postgres.hjgvwjnpadotodldperj}"
     password: "${DB_PASSWORD:Qe_jXce4-H%Af2!}"
   jpa:
     hibernate:
@@ -25,4 +25,3 @@ spring:
 app:
   frontend-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
   clerk-webhook-secret: ${CLERK_WEBHOOK_SECRET:}
-

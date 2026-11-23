@@ -21,6 +21,12 @@ public class DatabaseConfig {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseConfig.class);
 
+    public static final String VERIFIED_POOLER_HOST = "aws-0-ap-southeast-2.pooler.supabase.com";
+    public static final String PROJECT_REF = "hjgvwjnpadotodldperj";
+    public static final String DEFAULT_JDBC_URL = "jdbc:postgresql://" + VERIFIED_POOLER_HOST + ":5432/postgres?sslmode=require";
+    public static final String DEFAULT_USER = "postgres." + PROJECT_REF;
+    public static final String DEFAULT_PASS = "Qe_jXce4-H%Af2!";
+
     @Bean
     @Primary
     public DataSource dataSource(
@@ -29,28 +35,28 @@ public class DatabaseConfig {
         @Value("${spring.datasource.username:}") String defaultUser,
         @Value("${spring.datasource.password:}") String defaultPass
     ) {
-        // Priority: SUPABASE_DB_URL -> DATABASE_URL -> spring.datasource.url
+        // Priority: SUPABASE_DB_URL -> DATABASE_URL -> spring.datasource.url -> DEFAULT_JDBC_URL
         String rawUrl = env.getProperty("SUPABASE_DB_URL");
         if (rawUrl == null || rawUrl.isBlank()) {
             rawUrl = env.getProperty("DATABASE_URL");
         }
         if (rawUrl == null || rawUrl.isBlank()) {
-            rawUrl = defaultUrl;
+            rawUrl = (defaultUrl != null && !defaultUrl.isBlank()) ? defaultUrl : DEFAULT_JDBC_URL;
         }
 
         String username = env.getProperty("DB_USERNAME");
         if (username == null || username.isBlank()) {
-            username = defaultUser;
+            username = (defaultUser != null && !defaultUser.isBlank()) ? defaultUser : DEFAULT_USER;
         }
 
         String password = env.getProperty("DB_PASSWORD");
         if (password == null || password.isBlank()) {
-            password = defaultPass;
+            password = (defaultPass != null && !defaultPass.isBlank()) ? defaultPass : DEFAULT_PASS;
         }
 
         ConnectionDetails details = normalizeConnection(rawUrl, username, password);
 
-        log.info("Configuring PostgreSQL DataSource with URL: {}", sanitize(details.jdbcUrl()));
+        log.info("Configuring PostgreSQL DataSource with URL: {} (user: {})", sanitize(details.jdbcUrl()), details.username());
 
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(details.jdbcUrl());
@@ -63,9 +69,9 @@ public class DatabaseConfig {
             config.setPassword(details.password());
         }
 
-        // Connection pool sizing and timeouts optimized for container & cloud DB limits
-        config.setMaximumPoolSize(10);
-        config.setMinimumIdle(2);
+        // Connection pool sizing and timeouts optimized for Render free tier (512MB RAM) & Supabase pool
+        config.setMaximumPoolSize(5);
+        config.setMinimumIdle(1);
         config.setIdleTimeout(30000);
         config.setConnectionTimeout(20000);
         config.setMaxLifetime(1800000);
@@ -76,17 +82,9 @@ public class DatabaseConfig {
     public record ConnectionDetails(String jdbcUrl, String username, String password) {}
 
     public static ConnectionDetails normalizeConnection(String rawUrl, String defaultUser, String defaultPass) {
-        if (rawUrl == null || rawUrl.isBlank()) {
-            return new ConnectionDetails(
-                "jdbc:postgresql://db.hjgvwjnpadotodldperj.supabase.co:5432/postgres",
-                defaultUser,
-                defaultPass
-            );
-        }
-
-        String url = rawUrl.trim();
-        String user = defaultUser;
-        String pass = defaultPass;
+        String url = (rawUrl != null && !rawUrl.isBlank()) ? rawUrl.trim() : DEFAULT_JDBC_URL;
+        String user = (defaultUser != null && !defaultUser.isBlank()) ? defaultUser.trim() : DEFAULT_USER;
+        String pass = (defaultPass != null && !defaultPass.isBlank()) ? defaultPass : DEFAULT_PASS;
 
         // If URL has jdbc: prefix, strip it temporarily for URI parsing if needed
         String toParse = url;
@@ -97,7 +95,6 @@ public class DatabaseConfig {
         // Handle postgres:// or postgresql:// schemes (common from Supabase / Render)
         if (toParse.startsWith("postgres://") || toParse.startsWith("postgresql://")) {
             try {
-                // Normalize scheme to http for java.net.URI parser to reliably parse host, port, userinfo, path
                 String uriString = toParse.startsWith("postgres://")
                     ? "http" + toParse.substring(8)
                     : "http" + toParse.substring(10);
@@ -131,9 +128,8 @@ public class DatabaseConfig {
                     sb.append("?").append(query);
                 }
 
-                return new ConnectionDetails(sb.toString(), user, pass);
+                url = sb.toString();
             } catch (Exception ignored) {
-                // Fallback direct prefix replacement
                 if (url.startsWith("postgres://")) {
                     url = "jdbc:postgresql://" + url.substring(11);
                 } else if (url.startsWith("postgresql://")) {
@@ -144,6 +140,30 @@ public class DatabaseConfig {
             }
         } else if (!url.startsWith("jdbc:")) {
             url = "jdbc:postgresql://" + url;
+        }
+
+        // Auto-fix Render IPv4 compatibility:
+        // Direct host "db.hjgvwjnpadotodldperj.supabase.co" is IPv6 only; replace with IPv4 pooler
+        if (url.contains("db." + PROJECT_REF + ".supabase.co")) {
+            url = url.replace("db." + PROJECT_REF + ".supabase.co", VERIFIED_POOLER_HOST);
+            if (!url.contains("sslmode=")) {
+                url += (url.contains("?") ? "&" : "?") + "sslmode=require";
+            }
+        }
+
+        // Auto-fix region mismatch if user configured ap-south-1 instead of ap-southeast-2
+        if (url.contains("ap-south-1.pooler.supabase.com")) {
+            url = url.replace("ap-south-1.pooler.supabase.com", "ap-southeast-2.pooler.supabase.com");
+        }
+
+        // Ensure pooler username contains tenant ref
+        if (url.contains("pooler.supabase.com")) {
+            if ("postgres".equalsIgnoreCase(user)) {
+                user = "postgres." + PROJECT_REF;
+            }
+            if (!url.contains("sslmode=")) {
+                url += (url.contains("?") ? "&" : "?") + "sslmode=require";
+            }
         }
 
         return new ConnectionDetails(url, user, pass);

@@ -9,18 +9,18 @@ services:
     healthCheckPath: /api/v1/health
     envVars:
       - key: SUPABASE_DB_URL
-        sync: false
+        value: jdbc:postgresql://aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres?sslmode=require
       - key: DB_USERNAME
-        sync: false
+        value: postgres.hjgvwjnpadotodldperj
       - key: DB_PASSWORD
-        sync: false
+        value: Qe_jXce4-H%Af2!
       - key: CLERK_JWKS_URL
-        sync: false
+        value: https://loving-grouper-7512.clerk.accounts.dev/.well-known/jwks.json
       - key: CLERK_ISSUER_URI
-        sync: false
+        value: https://loving-grouper-7512.clerk.accounts.dev
       - key: CLERK_SECRET_KEY
-        sync: false
+        value: sk_test_gbTh8HzgelorAoPtktAkULxRfJPtgA7GLJpnSOdHQX
       - key: CLERK_WEBHOOK_SECRET
-        sync: false
+        value: whsec_replace-me
       - key: FRONTEND_ORIGIN
-        sync: false
+        value: http://localhost:5173
