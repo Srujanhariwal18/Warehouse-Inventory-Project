@@ -78,7 +78,11 @@ public class SecurityConfig {
         c.setAllowedOriginPatterns(List.of(
             "http://localhost:*",
             "http://127.0.0.1:*",
-            "https://*.clerk.accounts.dev"
+            "https://*.clerk.accounts.dev",
+            "https://*.onrender.com",
+            "https://*.vercel.app",
+            "https://*.netlify.app",
+            "*"
         ));
         c.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
         c.setAllowedHeaders(List.of("*"));

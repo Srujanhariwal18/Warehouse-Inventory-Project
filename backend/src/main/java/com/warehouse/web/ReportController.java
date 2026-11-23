@@ -18,6 +18,7 @@ import java.io.StringWriter;
 @RestController
 @RequestMapping("/api/v1/reports")
 @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
+@SuppressWarnings("null")
 public class ReportController {
 
     final ItemRepository items;

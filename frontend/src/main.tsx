@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ClerkProvider, SignedIn, SignedOut } from '@clerk/clerk-react';
+import { ClerkProvider, Show } from '@clerk/react';
 import { LandingPage } from './LandingPage';
 import { Dashboard } from './Dashboard';
 import './styles.css';
@@ -26,20 +26,20 @@ const RootApp: React.FC = () => {
   return (
     <ClerkProvider publishableKey={clerkPubKey}>
       {/* When signed in via Clerk, display full authenticated dashboard */}
-      <SignedIn>
+      <Show when="signed-in">
         <Dashboard
           dark={dark}
           onToggleTheme={toggleTheme}
         />
-      </SignedIn>
+      </Show>
 
       {/* When signed out, show the modern landing page */}
-      <SignedOut>
+      <Show when="signed-out">
         <LandingPage
           dark={dark}
           onToggleTheme={toggleTheme}
         />
-      </SignedOut>
+      </Show>
     </ClerkProvider>
   );
 };

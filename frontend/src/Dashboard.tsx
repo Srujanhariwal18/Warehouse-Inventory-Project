@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserButton, useAuth, useUser } from '@clerk/clerk-react';
+import { UserButton, useAuth, useUser } from '@clerk/react';
 import {
   Boxes,
   Barcode,
@@ -525,7 +525,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 )}
               </button>
 
-              <UserButton afterSignOutUrl="/" />
+              <UserButton />
             </div>
           </header>
 

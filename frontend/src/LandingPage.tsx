@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SignInButton } from '@clerk/clerk-react';
+import { SignInButton } from '@clerk/react';
 import {
   Boxes,
   Zap,

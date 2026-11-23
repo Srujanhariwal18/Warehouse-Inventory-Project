@@ -1,3 +1,6 @@
+server:
+  port: ${PORT:8080}
+
 spring:
   config:
     import:
@@ -21,3 +24,4 @@ spring:
 app:
   frontend-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
   clerk-webhook-secret: ${CLERK_WEBHOOK_SECRET:}
+

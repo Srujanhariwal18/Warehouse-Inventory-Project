@@ -4,7 +4,6 @@ import com.warehouse.domain.*;
 import com.warehouse.repo.*;
 import com.warehouse.service.*;
 import jakarta.validation.constraints.*;
-import org.springframework.http.*;
 import org.springframework.security.access.prepost.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -15,6 +14,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1")
+@SuppressWarnings("null")
 public class ApiController {
 
     final ItemRepository items;

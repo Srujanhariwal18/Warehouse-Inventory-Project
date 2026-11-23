@@ -1,2 +1,67 @@
-package com.warehouse.service; import com.warehouse.domain.*; import com.warehouse.repo.*; import jakarta.transaction.*; import org.springframework.stereotype.*; import java.util.*;
-@Service public class StockService { final ItemRepository items; final TransactionRepository transactions; final AlertRepository alerts; public StockService(ItemRepository i,TransactionRepository t,AlertRepository a){items=i;transactions=t;alerts=a;} @Transactional public StockTransaction record(UUID itemId,TransactionType type,int quantity,String note,UUID user){if(quantity<=0)throw new IllegalArgumentException("Quantity must be positive"); Item item=items.findById(itemId).orElseThrow(()->new NoSuchElementException("Item not found")); int next=item.quantity+(type==TransactionType.IN?quantity:-quantity); if(next<0)throw new IllegalStateException("Insufficient stock"); item.quantity=next; item.updatedAt=java.time.Instant.now(); StockTransaction tx=new StockTransaction();tx.item=item;tx.type=type;tx.quantity=quantity;tx.note=note;tx.performedBy=user;transactions.save(tx); if(next<=item.lowStockThreshold&&!alerts.existsByItemIdAndStatusNot(item.id,AlertStatus.RESOLVED)){Alert a=new Alert();a.item=item;a.message=next==0?"Item is out of stock":"Item is at or below its low-stock threshold";alerts.save(a);} if(next>item.lowStockThreshold) alerts.findByStatusNot(AlertStatus.RESOLVED).stream().filter(a->a.item.id.equals(item.id)).forEach(a->{a.status=AlertStatus.RESOLVED;a.resolvedAt=java.time.Instant.now();}); return tx;} }
+package com.warehouse.service;
+
+import com.warehouse.domain.*;
+import com.warehouse.repo.*;
+import jakarta.transaction.Transactional;
+import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.util.NoSuchElementException;
+import java.util.UUID;
+
+@Service
+@SuppressWarnings("null")
+public class StockService {
+
+    final ItemRepository items;
+    final TransactionRepository transactions;
+    final AlertRepository alerts;
+
+    public StockService(ItemRepository i, TransactionRepository t, AlertRepository a) {
+        this.items = i;
+        this.transactions = t;
+        this.alerts = a;
+    }
+
+    @Transactional
+    public StockTransaction record(UUID itemId, TransactionType type, int quantity, String note, UUID user) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
+
+        Item item = items.findById(itemId).orElseThrow(() -> new NoSuchElementException("Item not found"));
+        int next = item.quantity + (type == TransactionType.IN ? quantity : -quantity);
+        if (next < 0) {
+            throw new IllegalStateException("Insufficient stock");
+        }
+
+        item.quantity = next;
+        item.updatedAt = Instant.now();
+
+        StockTransaction tx = new StockTransaction();
+        tx.item = item;
+        tx.type = type;
+        tx.quantity = quantity;
+        tx.note = note;
+        tx.performedBy = user;
+        transactions.save(tx);
+
+        if (next <= item.lowStockThreshold && !alerts.existsByItemIdAndStatusNot(item.id, AlertStatus.RESOLVED)) {
+            Alert a = new Alert();
+            a.item = item;
+            a.message = next == 0 ? "Item is out of stock" : "Item is at or below its low-stock threshold";
+            alerts.save(a);
+        }
+
+        if (next > item.lowStockThreshold) {
+            alerts.findByStatusNot(AlertStatus.RESOLVED).stream()
+                    .filter(a -> a.item.id.equals(item.id))
+                    .forEach(a -> {
+                        a.status = AlertStatus.RESOLVED;
+                        a.resolvedAt = Instant.now();
+                    });
+        }
+
+        return tx;
+    }
+}
