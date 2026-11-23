@@ -8,7 +8,8 @@ spring:
       - "optional:file:./backend/.env[.properties]"
       - "optional:file:../.env[.properties]"
   datasource:
-    url: "${SUPABASE_DB_URL:jdbc:postgresql://db.hjgvwjnpadotodldperj.supabase.co:5432/postgres}"
+    driver-class-name: org.postgresql.Driver
+    url: "${SUPABASE_DB_URL:${DATABASE_URL:jdbc:postgresql://db.hjgvwjnpadotodldperj.supabase.co:5432/postgres}}"
     username: "${DB_USERNAME:postgres}"
     password: "${DB_PASSWORD:Qe_jXce4-H%Af2!}"
   jpa:
